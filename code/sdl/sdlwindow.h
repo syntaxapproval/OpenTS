@@ -51,6 +51,7 @@ int Main_Window_Refresh_Rate(void);
 std::vector<std::pair<int, int>> Main_Window_Fullscreen_Sizes(void);
 
 void Main_Window_Pump_Events(void);
+void Main_Window_Yield(void);
 
 // Requests made before a pump reach the game as one WINDOW_EVENT_EXPOSED.
 void Main_Window_Request_Repaint(void);

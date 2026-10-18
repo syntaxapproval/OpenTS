@@ -23,6 +23,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -568,6 +572,27 @@ void Main_Window_Pump_Events(void)
 			Handle_SDL_Event(sdlevent);
 		}
 	}
+
+	Main_Window_Yield();
+}
+
+
+/// <summary>
+/// Gives the browser the thread, when the game runs on a page.
+/// A page shows the frame, delivers input and plays sound only while the browser has the
+/// thread, so every loop that waits comes through here, by way of the event pump or Call_Back.
+/// At most once every few milliseconds, so a loop that comes through often is not slowed.
+/// Does nothing elsewhere.
+/// </summary>
+void Main_Window_Yield(void)
+{
+#ifdef __EMSCRIPTEN__
+	static double lastyield = 0.0;
+	if (emscripten_get_now() - lastyield >= 4.0) {
+		emscripten_sleep(0);
+		lastyield = emscripten_get_now();
+	}
+#endif
 }
 
 

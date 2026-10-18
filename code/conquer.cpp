@@ -538,6 +538,12 @@ void Call_Back(void)
 	if (Session.Type == GAME_IPX || Session.Type == GAME_INTERNET) {
 		IPX_Call_Back();
 	}
+
+	/*
+	 * Loops that wait on a sound call this rather than the message handler; on a page the
+	 * sound is fed only while the browser has the thread.
+	 */
+	Main_Window_Yield();
 }
 
 
