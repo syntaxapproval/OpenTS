@@ -39,10 +39,36 @@ foreach(f ${OPENTS_RAW})
         endif()
     endforeach()
 
+    if(EMSCRIPTEN AND f MATCHES "\.rc$")
+        set(EXCLUDED TRUE)
+    endif()
+
     if(NOT EXCLUDED)
         list(APPEND OPENTS_SRC "${f}")
     endif()
 endforeach()
+
+if(EMSCRIPTEN)
+    # The Win32 the engine still calls, and the string table Language.dll carries on Windows.
+    set(OPENTS_LANGUAGE_TABLE "${OPENTS_GENERATED_DIR}/opents_language_table.inc")
+    add_custom_command(
+        OUTPUT "${OPENTS_LANGUAGE_TABLE}"
+        COMMAND ${CMAKE_COMMAND}
+            "-DOPENTS_LANGUAGE_RC=${CMAKE_CURRENT_SOURCE_DIR}/language/language.rc"
+            "-DOPENTS_LANGUAGE_TABLE=${OPENTS_LANGUAGE_TABLE}"
+            -P "${CMAKE_SOURCE_DIR}/port/emscripten/LanguageTable.cmake"
+        DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/language/language.rc"
+            "${CMAKE_SOURCE_DIR}/port/emscripten/LanguageTable.cmake"
+        COMMENT "Generating the language string table"
+        VERBATIM
+    )
+    list(APPEND OPENTS_SRC
+        "${CMAKE_SOURCE_DIR}/port/emscripten/winshim.cpp"
+        "${CMAKE_SOURCE_DIR}/port/emscripten/probe.cpp"
+        "${OPENTS_LANGUAGE_TABLE}"
+    )
+endif()
 
 #
 # ---------------------------------------------------------
@@ -124,7 +150,21 @@ set(OPENTS_COMPILE_OPTIONS
     >
 )
 
-target_compile_options(OpenTS PRIVATE ${OPENTS_COMPILE_OPTIONS})
+if(EMSCRIPTEN)
+    # The Win32 headers come from port/emscripten, and the MSVC dialect the sources are
+    # written in is accepted as clang-cl would accept it.
+    set(OPENTS_COMPILE_OPTIONS
+        -fms-extensions
+        -fdeclspec
+        -Wno-everything
+        "SHELL:-include ${CMAKE_SOURCE_DIR}/port/emscripten/include/wincrt.h"
+    )
+    set(OPENTS_PORT_INCLUDE "${CMAKE_SOURCE_DIR}/port/emscripten/include")
+    target_compile_options(OpenTS PRIVATE ${OPENTS_COMPILE_OPTIONS})
+    target_include_directories(OpenTS BEFORE PRIVATE "${OPENTS_PORT_INCLUDE}")
+else()
+    target_compile_options(OpenTS PRIVATE ${OPENTS_COMPILE_OPTIONS})
+endif()
 
 #
 # ---------------------------------------------------------
@@ -156,7 +196,7 @@ set_source_files_properties(${OPENTS_BGFX_SOURCES} PROPERTIES
         "${BGFX_ROOT}/include;${CMAKE_SOURCE_DIR}/thirdparty/bgfx.cmake/bx/include"
     COMPILE_DEFINITIONS
         "BX_CONFIG_DEBUG=$<IF:$<CONFIG:Debug>,1,$<BOOL:${BX_CONFIG_DEBUG}>>"
-    COMPILE_OPTIONS "/Zc:preprocessor"
+    COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor>"
 )
 
 # The frame quad's shaders come from the imgui example and the overlay's from the debug
@@ -190,11 +230,15 @@ set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/ui/rml/rmltexture.cpp" APPEND P
 )
 
 message(STATUS "${PROJECT_NAME}: Adding compilier definitions...")
-target_compile_definitions(OpenTS PRIVATE
-    WIN32
-    _WINDOWS
-    NOMINMAX
-)
+if(EMSCRIPTEN)
+    target_compile_definitions(OpenTS PRIVATE NOMINMAX)
+else()
+    target_compile_definitions(OpenTS PRIVATE
+        WIN32
+        _WINDOWS
+        NOMINMAX
+    )
+endif()
 
 #
 # ---------------------------------------------------------
@@ -224,16 +268,40 @@ target_link_libraries(OpenTS PRIVATE
     RmlUi::Core
     imgui
     SDL3::SDL3-static
-    comctl32
-    dbghelp
-    iphlpapi
-    psapi
-    version
-    winmm
-    ws2_32
-    kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
-    odbc32 odbccp32
 )
+
+if(WIN32)
+    target_link_libraries(OpenTS PRIVATE
+        comctl32
+        dbghelp
+        iphlpapi
+        psapi
+        version
+        winmm
+        ws2_32
+        kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32
+        odbc32 odbccp32
+    )
+endif()
+
+if(EMSCRIPTEN)
+    # The game's loop never returns to the browser, so Asyncify unwinds it at every frame
+    # and every wait. The game data is mounted at run time, not preloaded.
+    target_link_options(OpenTS PRIVATE
+        -sASYNCIFY=1
+        -sASYNCIFY_STACK_SIZE=1048576
+        -sSTACK_SIZE=2097152
+        -sALLOW_MEMORY_GROWTH=1
+        -sINITIAL_MEMORY=268435456
+        -sMAX_WEBGL_VERSION=2
+        -sMIN_WEBGL_VERSION=2
+        -sFORCE_FILESYSTEM=1
+        -sEXIT_RUNTIME=1
+        -sEXPORTED_RUNTIME_METHODS=FS,callMain,addRunDependency,removeRunDependency
+        -lidbfs.js
+    )
+    set_target_properties(OpenTS PROPERTIES SUFFIX ".js" OUTPUT_NAME "opents")
+endif()
 
 if(MSVC)
     target_link_options(OpenTS PRIVATE
@@ -324,5 +392,7 @@ set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT OpenTS)
 # ---------------------------------------------------------
 set(NATVIS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/sun.natvis")
 source_group("Natvis Files" FILES ${NATVIS_FILE})
-target_sources(OpenTS PRIVATE ${NATVIS_FILE})
-target_link_options(OpenTS PRIVATE "/NATVIS:${NATVIS_FILE}")
+if(MSVC)
+    target_sources(OpenTS PRIVATE ${NATVIS_FILE})
+    target_link_options(OpenTS PRIVATE "/NATVIS:${NATVIS_FILE}")
+endif()

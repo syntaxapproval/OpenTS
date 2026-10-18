@@ -22,7 +22,12 @@ option(OPENTS_DESKTOP_TESTS "Register the tests that need an otherwise idle desk
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+if(EMSCRIPTEN)
+    # The unsupported WebAssembly build. Win32 is supplied by port/emscripten.
+    message(STATUS "OpenTS: Emscripten build")
+    # The toolchain file calls the target x86, which would have bx ask for SSE.
+    set(CMAKE_SYSTEM_PROCESSOR wasm32)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
    AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
     if(NOT OPENTS_EXPERIMENTAL_CLANG_CL)
         message(FATAL_ERROR
@@ -49,7 +54,9 @@ if(NOT OPENTS_ARCH)
     set(OPENTS_ARCH "unknown")
 endif()
 
-enable_language(RC)
+if(NOT EMSCRIPTEN)
+    enable_language(RC)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -103,7 +110,9 @@ add_custom_target(OpenTSBuildStamp ALL
 
 add_subdirectory(thirdparty)
 add_subdirectory(code)
-add_subdirectory(code/language)
+if(NOT EMSCRIPTEN)
+    add_subdirectory(code/language)
 
-enable_testing()
-add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
