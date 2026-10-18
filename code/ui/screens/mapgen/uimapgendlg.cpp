@@ -54,7 +54,7 @@ class UIMapGenEngineServiceClass : public UIMapGenServiceClass
 
 			state.Environments.clear();
 			for (int index = BIOME_FIRST; index < BIOME_COUNT; index++) {
-				if (index != BIOME_MUTATED || state.Firestorm) {
+				if ((index != BIOME_MUTATED || state.Firestorm) && MapSeedClass::Biome_Installed(index)) {
 					state.Environments.push_back(UIMapGenOption{Fetch_String(UI_MAPGEN_BIOME_NAMES[index]), index});
 				}
 			}

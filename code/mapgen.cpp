@@ -3673,11 +3673,52 @@ void MapSeedClass::Fixup_WDT_Settings(void)
 }
 
 
+/*
+ * The theater each biome is generated in, by name.
+ */
+static char const * const BiomeTheaters[BIOME_COUNT] = {
+	"SNOW",
+	"SNOW",
+	"TEMPERATE",
+	"TEMPERATE",
+	"TEMPERATE",
+};
+
+
+/// <summary>
+/// Whether the files of the theater a biome is generated in are present. The Tiberian Sun
+/// demo, for one, ships the temperate theater alone, and generating in a theater without its
+/// tile artwork reads tile data that was never loaded.
+/// </summary>
+/// <param name="biome">The biome to check.</param>
+/// <returns>bool; Can a map be generated in this biome?</returns>
+bool MapSeedClass::Biome_Installed(int biome)
+{
+	if (biome < BIOME_FIRST || biome >= BIOME_COUNT) {
+		return(false);
+	}
+
+	TheaterType theater = TheaterClass::From_Name(BiomeTheaters[biome]);
+	if (theater == THEATER_NONE) {
+		return(false);
+	}
+
+	TheaterClass const & data = TheaterClass::As_Reference(theater);
+	char root[_MAX_PATH];
+	char iso[_MAX_PATH];
+	snprintf(root, sizeof(root), "%s.MIX", data.Root.c_str());
+	snprintf(iso, sizeof(iso), "%s.MIX", data.IsoRoot.c_str());
+
+	return(CCFileClass(root).Is_Available() && CCFileClass(iso).Is_Available());
+}
+
+
 /// <summary>
 /// Clamps every map generation setting to its legal range. Call it after anything changes the
 /// settings: reading the screen, a randomize, or a load. A tournament territory narrows the
 /// ranges further; without the Firestorm addon, the mutated biome becomes temperate and the
-/// other Firestorm settings are cleared.
+/// other Firestorm settings are cleared. A biome whose theater is not installed becomes
+/// temperate.
 /// </summary>
 void MapSeedClass::Fixup_Settings(void)
 {
@@ -3702,6 +3743,10 @@ void MapSeedClass::Fixup_Settings(void)
 	}
 
 	if (Biome == BIOME_MUTATED && !Addon_Enabled(ADDON_FIRESTORM)) {
+		Biome = BIOME_TEMPERATE;
+	}
+
+	if (!Biome_Installed(Biome)) {
 		Biome = BIOME_TEMPERATE;
 	}
 
@@ -4517,13 +4562,7 @@ ScenarioState MapGeneratorClass::Init_Map(bool full_init, CCINIClass * scenario)
 {
 	int biome = SeedData.Biome;
 
-	char const *_theaters[BIOME_COUNT] = {
-		"SNOW",
-		"SNOW",
-		"TEMPERATE",
-		"TEMPERATE",
-		"TEMPERATE",
-	};
+	char const * const * _theaters = BiomeTheaters;
 
 	char const *_fills[BIOME_COUNT] = {
 		"Clear",

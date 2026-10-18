@@ -355,6 +355,7 @@ class MapSeedClass : public LoadOptionsClass
 		 */
 		void Randomize(void);
 		void Fixup_Settings(void);
+		static bool Biome_Installed(int biome);
 		void Fixup_WDT_Settings(void);
 		void Clamp_Setting(int & setting, int min, int max, bool use_midpoint) const;
 
