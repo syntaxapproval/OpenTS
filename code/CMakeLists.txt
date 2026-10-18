@@ -156,6 +156,9 @@ if(EMSCRIPTEN)
     set(OPENTS_COMPILE_OPTIONS
         -fms-extensions
         -fdeclspec
+        # Calls through a null object pointer that MSVC's code survives, such as a
+        # dynamic_cast of a null this, are not optimised on the assumption they cannot happen.
+        -fno-delete-null-pointer-checks
         -Wno-everything
         "SHELL:-include ${CMAKE_SOURCE_DIR}/port/emscripten/include/wincrt.h"
     )
@@ -288,6 +291,7 @@ if(EMSCRIPTEN)
     # The game's loop never returns to the browser, so Asyncify unwinds it at every frame
     # and every wait. The game data is mounted at run time, not preloaded.
     target_link_options(OpenTS PRIVATE
+        --profiling-funcs
         -sASYNCIFY=1
         -sASYNCIFY_STACK_SIZE=1048576
         -sSTACK_SIZE=2097152
