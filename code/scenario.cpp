@@ -1263,11 +1263,17 @@ void Do_Win(void)
 				Play_Movie(Campaigns[Scen->Campaign]->FinalMovie);
 			}
 			Show_Who_Was_Responsible();
-#ifdef _DEMO
-			Load_Title_Page("tsdemoss.pcx", true);
-			Keyboard->Clear();
-			Keyboard->Get();
-#endif
+			// The 1999 demo closes on its "buy the full game" page. Its build compiled this in
+			// with _DEMO; keying it on the file lets the demo data bring it back.
+			if (CCFileClass("TSDEMOSS.PCX").Is_Available()) {
+				Load_Title_Page("TSDEMOSS.PCX", true);
+				Keyboard->Clear();
+				while (!Keyboard->Check()) {
+					Call_Back();
+					Update_Visible_Surface(HiddenSurface);
+				}
+				Keyboard->Get();
+			}
 			GameActive = false;
 			Show_Mouse();
 			return;
