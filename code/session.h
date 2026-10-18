@@ -517,6 +517,7 @@ class SessionClass
 		void Read_MultiPlayer_Settings (void);
 		void Write_MultiPlayer_Settings (void);
 		void Read_Scenario_Descriptions (void);
+		void Add_Installed_Mission(INIClass const & ini, char const * name);
 		void Free_Scenario_Descriptions(void);
 
 		//.....................................................................

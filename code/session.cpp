@@ -867,6 +867,24 @@ void SessionClass::Write_MultiPlayer_Settings(void)
 	}
 }
 
+/// <summary>
+/// Adds a packet's map to the scenario list when its map file is installed. A packet can list
+/// maps that are not, as the Tiberian Sun demo's MISSIONS.PKT does, and listing those only
+/// offers maps that fail to load.
+/// </summary>
+/// <param name="ini">The packet the map is described in.</param>
+/// <param name="name">The map's name in the packet.</param>
+void SessionClass::Add_Installed_Mission(INIClass const & ini, char const * name)
+{
+	MultiMission * mission = new MultiMission(ini, name);
+	if (CCFileClass(mission->Get_Filename()).Is_Available()) {
+		Scenarios.Add(mission);
+	} else {
+		delete mission;
+	}
+}
+
+
 /***************************************************************************
  * SessionClass::Read_Scenario_Descriptions -- reads scen. descriptions    *
  *                                                                         *
@@ -904,7 +922,7 @@ void SessionClass::Read_Scenario_Descriptions(void)
 //DebugString( "Found %i missions in Missions.pkt\n", count );
 		for (int index = 0; index < count; index++) {
 			if (ini.Get_String("MultiMaps", ini.Get_Entry("MultiMaps", index), "", name_buffer, sizeof(name_buffer))) {
-				Scenarios.Add(new MultiMission(ini, name_buffer));
+				Add_Installed_Mission(ini, name_buffer);
 			}
 		}
 /*		//	ajw Copy file for viewing.
@@ -932,7 +950,7 @@ void SessionClass::Read_Scenario_Descriptions(void)
 				int count = ini.Entry_Count("MultiMaps");
 				for (int index = 0; index < count; index++) {
 					if (ini.Get_String("MultiMaps", ini.Get_Entry("MultiMaps", index), "", name_buffer, sizeof(name_buffer))) {
-						Scenarios.Add(new MultiMission(ini, name_buffer));
+						Add_Installed_Mission(ini, name_buffer);
 					}
 				}
 			}
@@ -949,7 +967,7 @@ void SessionClass::Read_Scenario_Descriptions(void)
 			int count = ini.Entry_Count("MultiMaps");
 			for (int index = 0; index < count; index++) {
 				if (ini.Get_String("MultiMaps", ini.Get_Entry("MultiMaps", index), "", name_buffer, sizeof(name_buffer))) {
-					Scenarios.Add(new MultiMission(ini, name_buffer));
+					Add_Installed_Mission(ini, name_buffer);
 				}
 			}
 		}
