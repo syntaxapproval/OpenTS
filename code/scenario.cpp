@@ -1168,11 +1168,16 @@ static void Show_Demo_Order_Page(void)
 
 	Load_Title_Page("TSDEMOSS.PCX", true);
 	Keyboard->Clear();
-	while (!Keyboard->Check()) {
+
+	// The release of the key that closed the score screen arrives after the clear; only a
+	// press closes the page.
+	for (;;) {
 		Call_Back();
 		Update_Visible_Surface(HiddenSurface);
+		if (Keyboard->Check() && (Keyboard->Get() & KN_RLSE_BIT) == 0) {
+			break;
+		}
 	}
-	Keyboard->Get();
 }
 
 

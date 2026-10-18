@@ -46,10 +46,6 @@
 #include "video.h"
 #include "win.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 
 /***********************************************************************************************
  * Windows_Message_Handler -- Handles windows message.                                         *
@@ -89,17 +85,4 @@ void Windows_Message_Handler(void)
 	 * reach the screen.
 	 */
 	Video_Present_If_Dirty();
-
-#ifdef __EMSCRIPTEN__
-	/*
-	 * A page shows the frame, delivers input and plays sound only while the browser has the
-	 * thread, so every loop that pumps messages gives it back here, at most once every few
-	 * milliseconds so a loop that pumps often is not slowed by it.
-	 */
-	static double lastyield = 0.0;
-	if (emscripten_get_now() - lastyield >= 4.0) {
-		emscripten_sleep(0);
-		lastyield = emscripten_get_now();
-	}
-#endif
 }
