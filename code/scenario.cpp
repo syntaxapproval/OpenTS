@@ -1155,6 +1155,27 @@ void Clear_Scenario(void)
 }
 
 
+/// <summary>
+/// Shows the 1999 demo's closing order page and waits for a key or click.
+/// The demo build compiled this in with _DEMO; keying it on the file lets the demo data bring
+/// it back, and does nothing with data that lacks the page.
+/// </summary>
+static void Show_Demo_Order_Page(void)
+{
+	if (!CCFileClass("TSDEMOSS.PCX").Is_Available()) {
+		return;
+	}
+
+	Load_Title_Page("TSDEMOSS.PCX", true);
+	Keyboard->Clear();
+	while (!Keyboard->Check()) {
+		Call_Back();
+		Update_Visible_Surface(HiddenSurface);
+	}
+	Keyboard->Get();
+}
+
+
 /***********************************************************************************************
  * Do_Win -- Display winning congratulations.                                                  *
  *                                                                                             *
@@ -1250,6 +1271,11 @@ void Do_Win(void)
 		}
 
 		if (Scen->IsOneTimeOnly) {
+
+			// The demo's last mission is both one-time-only and the end of the game.
+			if (Scen->IsEndOfGame) {
+				Show_Demo_Order_Page();
+			}
 			GameActive = false;
 			Show_Mouse();
 			return;
@@ -1263,17 +1289,7 @@ void Do_Win(void)
 				Play_Movie(Campaigns[Scen->Campaign]->FinalMovie);
 			}
 			Show_Who_Was_Responsible();
-			// The 1999 demo closes on its "buy the full game" page. Its build compiled this in
-			// with _DEMO; keying it on the file lets the demo data bring it back.
-			if (CCFileClass("TSDEMOSS.PCX").Is_Available()) {
-				Load_Title_Page("TSDEMOSS.PCX", true);
-				Keyboard->Clear();
-				while (!Keyboard->Check()) {
-					Call_Back();
-					Update_Visible_Surface(HiddenSurface);
-				}
-				Keyboard->Get();
-			}
+			Show_Demo_Order_Page();
 			GameActive = false;
 			Show_Mouse();
 			return;
