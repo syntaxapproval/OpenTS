@@ -541,6 +541,24 @@ std::vector<std::pair<int, int>> Main_Window_Fullscreen_Sizes(void)
 		return(sizes);
 	}
 
+#ifdef __EMSCRIPTEN__
+	/*
+	 * A page has no display modes to list; its window is the canvas, which takes any size.
+	 * Offer the usual sizes that fit the screen the page is on.
+	 */
+	static std::pair<int, int> const _common[] = {
+		{640, 480}, {800, 600}, {1024, 768}, {1152, 864}, {1280, 720}, {1280, 960}, {1280, 1024},
+		{1366, 768}, {1600, 900}, {1600, 1200}, {1920, 1080}, {1920, 1200}, {2560, 1440}
+	};
+	SDL_DisplayMode const * desktop = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+	for (std::pair<int, int> const & size : _common) {
+		if (desktop == nullptr || (size.first <= desktop->w && size.second <= desktop->h)) {
+			sizes.push_back(size);
+		}
+	}
+	return(sizes);
+#endif
+
 	int count = 0;
 	SDL_DisplayMode ** modes = SDL_GetFullscreenDisplayModes(SDL_GetPrimaryDisplay(), &count);
 	if (modes == nullptr) {
