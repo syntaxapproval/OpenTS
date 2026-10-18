@@ -15,6 +15,11 @@
 #include <algorithm>
 #include <cstring>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/eventloop.h>
+#endif
+
 namespace {
 
 // How much a producer may write in one pass, so one stream cannot hold the
@@ -345,6 +350,10 @@ bool AudioFeederClass::Start(void)
 	}
 	Exit.store(false, std::memory_order_release);
 	Running.store(true, std::memory_order_release);
+#ifdef __EMSCRIPTEN__
+	Interval = emscripten_set_interval(Interval_Callback, AUDIO_FEEDER_PERIOD_MS, this);
+	return(true);
+#endif
 	try {
 		Thread = std::thread([this]() { Run(); });
 	} catch (...) {
@@ -355,8 +364,22 @@ bool AudioFeederClass::Start(void)
 }
 
 
+#ifdef __EMSCRIPTEN__
+void AudioFeederClass::Interval_Callback(void * feeder)
+{
+	((AudioFeederClass *)feeder)->Service();
+}
+#endif
+
+
 void AudioFeederClass::Stop(void)
 {
+#ifdef __EMSCRIPTEN__
+	if (Interval != 0) {
+		emscripten_clear_interval(Interval);
+		Interval = 0;
+	}
+#endif
 	if (Thread.joinable()) {
 		Exit.store(true, std::memory_order_release);
 		Thread.join();
@@ -407,6 +430,10 @@ void AudioFeederClass::Detach(unsigned slot)
 		return;
 	}
 	s.State.store(SLOT_CLOSING, std::memory_order_release);
+#ifdef __EMSCRIPTEN__
+	// The feeder runs on this thread, so the slot is closed here rather than waited for.
+	Service_Streams();
+#endif
 	while (s.State.load(std::memory_order_acquire) != SLOT_IDLE) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}

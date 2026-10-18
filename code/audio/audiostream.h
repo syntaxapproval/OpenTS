@@ -201,6 +201,12 @@ class AudioFeederClass
 
 		SlotClass Slots[AUDIO_MAX_STREAMS];
 		std::thread Thread;
+#ifdef __EMSCRIPTEN__
+		// A page has no second thread to give the feeder, so the browser calls it back
+		// on the game's own thread, whenever the game's loop yields.
+		long Interval = 0;
+		static void Interval_Callback(void * feeder);
+#endif
 		std::atomic<bool> Exit{false};
 		std::atomic<bool> Running{false};
 		std::atomic<bool> Recovering{false};

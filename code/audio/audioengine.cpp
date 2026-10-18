@@ -21,6 +21,10 @@
 #include <string>
 #include <thread>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 namespace {
 
 // How long Stop_All_Streams waits for the voices to let go of their rings.
@@ -500,7 +504,12 @@ bool AudioEngineClass::Wait_Finished(AudioHandle handle, int ms)
 		if (Now_Ms() - start > (unsigned)ms) {
 			return(false);
 		}
+#ifdef __EMSCRIPTEN__
+		// The sound plays only while the browser has the thread.
+		emscripten_sleep(1);
+#else
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+#endif
 	}
 }
 
