@@ -102,7 +102,11 @@ class BackendCallback : public bgfx::CallbackI
 		{
 			char message[1024];
 			vsnprintf(message, sizeof(message), format, argList);
+#ifdef _WIN32
 			OutputDebugString(message);
+#else
+			fputs(message, stderr);
+#endif
 		}
 
 		virtual void profilerBegin(const char *, uint32_t, const char *, uint16_t) override {}

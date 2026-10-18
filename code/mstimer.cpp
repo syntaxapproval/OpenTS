@@ -20,6 +20,7 @@
 #endif
 
 
+#ifdef _WIN32
 // One request for the life of the process gives every timer millisecond resolution. Without
 // the opt-out, Windows 11 drops it while the window is minimized and each sleep lasts about 16 ms.
 static struct MillisecondResolutionClass
@@ -35,6 +36,7 @@ static struct MillisecondResolutionClass
 	}
 	~MillisecondResolutionClass(void) { timeEndPeriod(1); }
 } MillisecondResolution;
+#endif
 
 
 /// <summary>

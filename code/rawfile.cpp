@@ -196,6 +196,15 @@ char const * RawFileClass::Set_Name(char const * filename)
 
 #ifndef _WIN32
 	/*
+	** Search paths and names are written with Windows separators throughout the game.
+	*/
+	for (char * c = Filename; *c != '\0'; c++) {
+		if (*c == '\\') {
+			*c = '/';
+		}
+	}
+
+	/*
 	** If we ever save this file, make sure we save it in lowercase but
 	** if Resolve_File finds an actual file on-disk we use the real name
 	** instead.

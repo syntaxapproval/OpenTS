@@ -308,6 +308,12 @@ static void RegisterClasses(void)
 /// argument the way a DOS program received it.</param>
 /// <param name="argv">Receives the argument array, which lasts as long as the process.</param>
 /// <returns>The number of arguments, which is never less than one.</returns>
+#ifndef _WIN32
+// The arguments main() was handed, where there is no shell command line to ask for them.
+static int MainArgumentCount;
+static char ** MainArguments;
+#endif
+
 static int Build_Arguments(char const * path_to_exe, char ** & argv)
 {
 	static std::vector<std::string> arguments;
@@ -317,6 +323,11 @@ static int Build_Arguments(char const * path_to_exe, char ** & argv)
 	pointers.clear();
 	arguments.push_back(path_to_exe);
 
+#ifndef _WIN32
+	for (int index = 1; index < MainArgumentCount; index++) {
+		arguments.push_back(MainArguments[index]);
+	}
+#else
 	int wide_count = 0;
 	LPWSTR * wide_argv = CommandLineToArgvW(GetCommandLineW(), &wide_count);
 
@@ -333,6 +344,7 @@ static int Build_Arguments(char const * path_to_exe, char ** & argv)
 
 		LocalFree(wide_argv);
 	}
+#endif
 
 	for (std::string & argument : arguments) {
 		pointers.push_back(argument.data());
@@ -365,11 +377,13 @@ static bool Claim_Single_Instance(void)
 		//
 		// Find the previous instance
 		//
+#ifdef _WIN32
 		HWND main_wnd = ::FindWindow (APP_GUID, NULL);
 		if (main_wnd != NULL) {
 			::SetForegroundWindow (main_wnd);
 			::ShowWindow (main_wnd, SW_RESTORE);
 		}
+#endif
 		if (AppMutex != NULL) {
 			CloseHandle(AppMutex);
 			AppMutex = NULL;
@@ -678,6 +692,20 @@ int CALLBACK WinMain ( HINSTANCE instance , HINSTANCE , char * , int )
 
 	return(error_code);
 }
+
+
+#ifndef _WIN32
+/// <summary>
+/// The entry point where there is no WinMain: keeps the arguments for Build_Arguments and
+/// starts the game the way Windows would have.
+/// </summary>
+int main(int argc, char ** argv)
+{
+	MainArgumentCount = argc;
+	MainArguments = argv;
+	return(WinMain(NULL, NULL, NULL, 0));
+}
+#endif
 
 /***********************************************************************************************
  * Prog_End -- Cleans up library systems in prep for game exit.                                *
