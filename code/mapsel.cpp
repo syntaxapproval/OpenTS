@@ -130,8 +130,9 @@ const char * Map_Selection(ScenarioClass * scen)
 /// <summary>
 /// Advances the campaign to a specific map.
 /// This is the way into the map selection system when the next map is already known, such
-/// as when a mission hands directly off to another. An error box is displayed if the map
-/// is not one the campaign can reach from here.
+/// as when a mission hands directly off to another. A map the campaign's progression does
+/// not list is still advanced to, by name alone, as the demo build always did; the stage is
+/// left unchanged. An error box is displayed only when no map is named.
 /// </summary>
 /// <param name="scenario">The scenario to advance. It is updated with the map named.</param>
 /// <param name="map_name">Name of the scenario to advance to.</param>
@@ -139,6 +140,15 @@ const char * Map_Selection(ScenarioClass * scen)
 const char * Map_Select_Advance(ScenarioClass * scenario, const char * map_name)
 {
 	if (MapSelect().Advance_Progression(scenario, map_name) == false) {
+
+		// The Tiberian Sun demo hands mission 1 to mission 2 this way, and its MAPSEL.INI
+		// lists only the retail campaign's maps.
+		if (scenario != NULL && map_name != NULL && map_name[0] != '\0') {
+			DebugString("MapSelect: %s is not in the progression; advancing to it by name.\n", map_name);
+			scenario->Set_Scenario_Name(map_name);
+			return(map_name);
+		}
+
 		WWMessageBox().Process("Unable to initiate Map Selection!\n", TXT_OK);
 		return(NULL);
 	}
