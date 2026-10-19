@@ -2376,31 +2376,41 @@ bool MapClass::Read_Binary_5(Straw & straw)
 	LZOStraw decomp(LZOStraw::DECOMPRESS);
 	decomp.Get_From(&straw);
 
-	// A pack that runs out before its CELL_NONE terminator was cut short, even when every
-	// block it did carry decompressed.
-	bool terminated = false;
+	// A pack that stops partway through a cell's record was cut short, even when every block
+	// it did carry decompressed. Some map editors end the pack after the last record instead
+	// of writing the CELL_NONE terminator; the retail game reads those maps, so a pack that
+	// runs out exactly between records is complete.
+	bool cut_short = false;
 	Cell cell;
+	int got;
 
-	while (decomp.Get(&cell, sizeof(cell)) == sizeof(cell)) {
+	while ((got = decomp.Get(&cell, sizeof(cell))) == sizeof(cell)) {
 		if (cell == CELL_NONE) {
-			terminated = true;
 			break;
 		}
 		CellClass * cellptr = &(*this)[cell];
+		int read = 0;
 		if (cellptr != NULL && cellptr != &BlubCell) {
 			cellptr->ITType = ISOTILE_NONE;
-			decomp.Get(&cellptr->ITType, sizeof(cellptr->ITType));
+			read += decomp.Get(&cellptr->ITType, sizeof(cellptr->ITType));
 			cellptr->ITType = IsometricTileTypeClass::Fixup_Tile_Type(cellptr->ITType);
-			decomp.Get(&cellptr->SubTile, sizeof(cellptr->SubTile));
-			decomp.Get(&cellptr->Height, sizeof(cellptr->Height));
-			decomp.Get(&cellptr->IsIceGrowthAllowed, sizeof(cellptr->IsIceGrowthAllowed));
+			read += decomp.Get(&cellptr->SubTile, sizeof(cellptr->SubTile));
+			read += decomp.Get(&cellptr->Height, sizeof(cellptr->Height));
+			read += decomp.Get(&cellptr->IsIceGrowthAllowed, sizeof(cellptr->IsIceGrowthAllowed));
 		} else {
 			char tmp[sizeof(cellptr->ITType) + sizeof(cellptr->SubTile) + sizeof(cellptr->Height) + sizeof(cellptr->IsIceGrowthAllowed)];
-			decomp.Get(&tmp, sizeof(tmp));
+			read = decomp.Get(&tmp, sizeof(tmp));
+		}
+		if (read != (int)(sizeof(cellptr->ITType) + sizeof(cellptr->SubTile) + sizeof(cellptr->Height) + sizeof(cellptr->IsIceGrowthAllowed))) {
+			cut_short = true;
+			break;
 		}
 	}
+	if (got != 0 && got != (int)sizeof(cell)) {
+		cut_short = true;
+	}
 	new (&BlubCell) CellClass;
-	return(terminated && !decomp.Is_Damaged());
+	return(!cut_short && !decomp.Is_Damaged());
 }
 
 
