@@ -388,8 +388,21 @@ bool Main_Window_Create(bool windowed, int width, int height, MainWindowIcon con
 		return(false);
 	}
 
+#ifdef __EMSCRIPTEN__
+	/*
+	** In a browser the page owns the canvas's size and scales it. A resizable window would follow
+	** every resize of the page, and the game is not ready to be resized at any moment (the
+	** title screen is not), so the window keeps the game's resolution. High pixel density would
+	** make the canvas bigger than the game's resolution on a scaled display.
+	*/
+	SDL_WindowFlags flags = SDL_WINDOW_HIDDEN;
+	if (!windowed) {
+		flags |= SDL_WINDOW_FULLSCREEN;
+	}
+#else
 	SDL_WindowFlags flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	flags |= windowed ? SDL_WINDOW_RESIZABLE : SDL_WINDOW_FULLSCREEN;
+#endif
 
 	_Window = SDL_CreateWindow("Tiberian Sun", width, height, flags);
 	if (_Window == nullptr) {
