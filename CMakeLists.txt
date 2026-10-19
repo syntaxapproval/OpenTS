@@ -55,6 +55,11 @@ else()
 endif()
 
 string(TOLOWER "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" OPENTS_ARCH)
+# A build for a particular host can name its platform in its own terms instead.
+set(OPENTS_ARCH_NAME "" CACHE STRING "Platform name printed in the version in place of the architecture")
+if(OPENTS_ARCH_NAME)
+    set(OPENTS_ARCH "${OPENTS_ARCH_NAME}")
+endif()
 if(NOT OPENTS_ARCH AND EMSCRIPTEN)
     set(OPENTS_ARCH "wasm32")
 endif()
