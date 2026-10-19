@@ -211,7 +211,18 @@ static void Finish_Decided_Game(void)
 static int Target_Frame_Rate(void)
 {
 	if (Session.Type == GAME_NORMAL || Session.Type == GAME_SKIRMISH) {
-		return((int)NetTiming::Solo_Game_Speed_Frame_Rate(Options.GameSpeed));
+		int rate = (int)NetTiming::Solo_Game_Speed_Frame_Rate(Options.GameSpeed);
+#ifdef __EMSCRIPTEN__
+		/*
+		 * The fastest setting has no limit of its own; on a desktop the wait for the display's
+		 * refresh holds it to the refresh rate, but a page's present does not wait, so the
+		 * game ran at a thousand frames a second. Hold it to 60, as a 60 Hz display would.
+		 */
+		if (rate == 0) {
+			rate = 60;
+		}
+#endif
+		return(rate);
 	}
 
 	// A recording is played back as fast as possible.
