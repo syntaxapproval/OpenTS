@@ -95,7 +95,16 @@ bool MiniaudioDeviceClass::Open(unsigned rate, unsigned channels, RenderCallback
 	config.playback.format = ma_format_f32;
 	config.playback.channels = channels;
 	config.sampleRate = rate;
+#ifdef __EMSCRIPTEN__
+	/*
+	 * A page plays through a ScriptProcessorNode, which is called back on the same thread as
+	 * the game, so a buffer must outlast the longest stretch the game holds the thread
+	 * (loading a map, decoding a frame of a movie). 4096 frames is about 85 ms at 48 kHz.
+	 */
+	config.periodSizeInFrames = 4096;
+#else
 	config.periodSizeInMilliseconds = AUDIO_PERIOD_MS;
+#endif
 	config.periods = AUDIO_PERIODS;
 	config.performanceProfile = ma_performance_profile_low_latency;
 	config.noPreSilencedOutputBuffer = MA_TRUE;
