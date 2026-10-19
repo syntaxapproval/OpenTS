@@ -11,6 +11,11 @@ set(OPENTS_VERSION_PRERELEASE "")
 # alone. Every other build names the commit it came from as well.
 option(OPENTS_OFFICIAL_BUILD "Build as an official release of the declared version" OFF)
 
+# A build made for a particular host can name itself on the title screen, and replace the
+# copyright line under it. Empty leaves the version line and the language string as they are.
+set(OPENTS_EDITION "" CACHE STRING "Name printed before the version on the title screen")
+set(OPENTS_COPYRIGHT "" CACHE STRING "Copyright line printed under the version on the title screen")
+
 option(OPENTS_EXPERIMENTAL_CLANG_CL "Build with clang-cl using the MSVC ABI" OFF)
 
 # Registers the tests that take over the desktop: they raise their own window, set the keyboard
@@ -50,6 +55,9 @@ else()
 endif()
 
 string(TOLOWER "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}" OPENTS_ARCH)
+if(NOT OPENTS_ARCH AND EMSCRIPTEN)
+    set(OPENTS_ARCH "wasm32")
+endif()
 if(NOT OPENTS_ARCH)
     set(OPENTS_ARCH "unknown")
 endif()
@@ -89,6 +97,8 @@ set(OPENTS_STAMP_ARGS
     "-DOPENTS_VERSION_HEADER=${OPENTS_VERSION_HEADER}"
     "-DOPENTS_STAMP_HEADER=${OPENTS_STAMP_HEADER}"
     "-DOPENTS_ARCH=${OPENTS_ARCH}"
+    "-DOPENTS_EDITION=${OPENTS_EDITION}"
+    "-DOPENTS_COPYRIGHT=${OPENTS_COPYRIGHT}"
     -P "${CMAKE_SOURCE_DIR}/cmake/GitStamp.cmake"
 )
 

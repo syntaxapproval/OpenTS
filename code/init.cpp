@@ -2895,24 +2895,26 @@ void Draw_Version_Text(Surface * surface)
 	rect = surface->Get_Rect();
 
 	Fancy_Text_Print(
-		"V%s",
+		OPENTS_EDITION[0] != '\0' ? "%s V%s" : "%sV%s",
 		*surface,
 		rect,
 		Point2D(rect.X + rect.Width - 2, rect.Y + rect.Height - 20),
 		Fetch_Scheme_By_Name("Green"),
 		TBLACK,
 		(TextPrintType)(TPF_EFNT|TPF_NOSHADOW|TPF_RIGHT),
+		OPENTS_EDITION,
 		version
 	);
 
 	Fancy_Text_Print(
-		Fetch_String(TXT_COPYRIGHT),
+		"%s",
 		*surface,
 		rect,
 		Point2D(rect.X + rect.Width - 2, rect.Y + rect.Height - 10),
 		Fetch_Scheme_By_Name("Green"),
 		TBLACK,
-		(TextPrintType)(TPF_EFNT|TPF_NOSHADOW|TPF_RIGHT)
+		(TextPrintType)(TPF_EFNT|TPF_NOSHADOW|TPF_RIGHT),
+		OPENTS_COPYRIGHT[0] != '\0' ? OPENTS_COPYRIGHT : Fetch_String(TXT_COPYRIGHT)
 	);
 }
 

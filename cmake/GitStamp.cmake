@@ -210,6 +210,10 @@ set(STAMP_CONTENT
 
 /* The version as the player sees it. A build that is not marked official names its commit. */
 #define OPENTS_VERSION_DISPLAY   \"${OPENTS_VERSION_DISPLAY}\"
+
+/* The title screen's edition name and copyright line, empty unless the build sets them. */
+#define OPENTS_EDITION           \"${OPENTS_EDITION}\"
+#define OPENTS_COPYRIGHT         \"${OPENTS_COPYRIGHT}\"
 ")
 
 # Rewriting an identical header would make every build recompile its consumers.
