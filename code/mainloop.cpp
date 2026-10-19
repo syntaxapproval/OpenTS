@@ -216,10 +216,11 @@ static int Target_Frame_Rate(void)
 		/*
 		 * The fastest setting has no limit of its own; on a desktop the wait for the display's
 		 * refresh holds it to the refresh rate, but a page's present does not wait, so the
-		 * game ran at a thousand frames a second. Hold it to 60, as a 60 Hz display would.
+		 * game ran at a thousand frames a second. Hold it to 90: the next setting down is 60,
+		 * so the fastest stays a step above it, as it is on a desktop with a faster display.
 		 */
 		if (rate == 0) {
-			rate = 60;
+			rate = 90;
 		}
 #endif
 		return(rate);
