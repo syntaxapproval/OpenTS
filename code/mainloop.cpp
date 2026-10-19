@@ -71,6 +71,10 @@
 
 #include <algorithm>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 //
 // Special module globals for recording and playback
 //
@@ -230,6 +234,33 @@ static int Target_Frame_Rate(void)
 	return(Session.Play ? 0 : Session.DesiredFrameRate);
 }
 
+#ifdef __EMSCRIPTEN__
+/// <summary>
+/// Shortens a frame's wait by however late the previous frame's wait ended. A page's timers wake
+/// a few milliseconds late, and at 120 frames a second that alone cost a quarter of the frames.
+/// Each wait is counted from where the last frame should have ended, so the rate averages out
+/// to the one asked for. After a stall of more than a few frames the count starts over, rather
+/// than racing to make up the time.
+/// </summary>
+/// <param name="wait">The frame's wait in milliseconds, from the frame pacer.</param>
+/// <returns>The milliseconds left until this frame should end.</returns>
+static NetTiming::Milliseconds Web_Paced_Wait(NetTiming::Milliseconds wait)
+{
+	static double due = 0.0;
+	double const now = emscripten_get_now();
+
+	if (wait == 0 || due == 0.0 || now - due > 100.0) {
+		due = now;
+	}
+	if (wait == 0) {
+		return(0);
+	}
+
+	due += wait;
+	return(due > now ? (NetTiming::Milliseconds)(due - now) : 0);
+}
+#endif
+
 /***********************************************************************************************
  * Main_Loop -- This is the main game loop (as a single loop).                                 *
  *                                                                                             *
@@ -307,7 +338,11 @@ bool Main_Loop(void)
 	**	Setup the timer so that the Main_Loop function processes at the correct rate.
 	*/
 	static NetTiming::FramePacer pacer;
+#ifdef __EMSCRIPTEN__
+	FrameTimer = Web_Paced_Wait(pacer.Next_Wait(Target_Frame_Rate()));
+#else
 	FrameTimer = pacer.Next_Wait(Target_Frame_Rate());
+#endif
 
 	/*
 	**	Update the display, unless we're inside a dialog.
