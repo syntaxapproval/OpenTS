@@ -160,6 +160,17 @@ void Motion_Capture(void)
 
 
 /// <summary>
+/// Whether the main loop draws the map this frame. A full-screen game that has lost the
+/// focus has nothing on screen to draw to; a game in a window is still in view beside the
+/// window that took the focus, so it keeps drawing, as the other windows on the desktop do.
+/// </summary>
+static bool Game_Draws(void)
+{
+	return(GameInFocus || WindowedMode);
+}
+
+
+/// <summary>
 /// Handles the game losing the input focus.
 /// This routine parks the main loop while another application holds the focus, pumping
 /// the Windows message queue so that the game can be restored. A network game cannot
@@ -348,7 +359,7 @@ bool Main_Loop(void)
 	**	Update the display, unless we're inside a dialog.
 	*/
 	if (!Session.Play) {
-		if (SpecialDialog == SDLG_NONE && GameInFocus) {
+		if (SpecialDialog == SDLG_NONE && Game_Draws()) {
 			UIShell.Tick();
 			Map.Input(input, x, y);
 			if (input) {
@@ -599,7 +610,7 @@ void Sync_Delay(void)
 
 	while (FrameTimer) {
 		Call_Back();
-		if (SpecialDialog == SDLG_NONE && GameInFocus == true) {
+		if (SpecialDialog == SDLG_NONE && Game_Draws()) {
 			KeyNumType input = KN_NONE;
 			int x, y;
 			if (FrameTimer > 10) {
@@ -617,8 +628,8 @@ void Sync_Delay(void)
 			UI_Serve_Screen();
 		}
 
-		// Out of focus nothing is drawn, so the wait gives the processor back.
-		Sleep(GameInFocus ? 0 : 1);
+		// When nothing is drawn (out of focus, full screen) the wait gives the processor back.
+		Sleep(Game_Draws() ? 0 : 1);
 	}
 
 	static CDTimerClass<MillisecondSystemTimerClass> fps_timer;
