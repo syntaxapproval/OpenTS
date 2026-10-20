@@ -66,6 +66,7 @@ if(EMSCRIPTEN)
     list(APPEND OPENTS_SRC
         "${CMAKE_SOURCE_DIR}/port/emscripten/winshim.cpp"
         "${CMAKE_SOURCE_DIR}/port/emscripten/probe.cpp"
+        "${CMAKE_SOURCE_DIR}/port/emscripten/netsocket_web.cpp"
         "${OPENTS_LANGUAGE_TABLE}"
     )
 endif()

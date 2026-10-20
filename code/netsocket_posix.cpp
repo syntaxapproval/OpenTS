@@ -10,10 +10,11 @@
 // The BSD sockets implementation of SocketClass, for the platforms that have no
 // Winsock. It mirrors netsocket_win32.cpp; where the two differ it is because
 // the platform does, not because the transport asked for anything else.
+// The web build has its own (port/emscripten/netsocket_web.cpp): a page cannot send UDP.
 
 #include "always.h"
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
 
 #include "netsocket.h"
 
