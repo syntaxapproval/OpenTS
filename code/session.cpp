@@ -166,7 +166,7 @@ SessionClass::SessionClass(void)
 	Options.GameSpeed = 0;
 	Options.CrapEngineers = 0;
 
-	Options.AlliesAllowed=1;	// the Network lobby has no Allies option; players ally with A, as in Red Alert
+	Options.AlliesAllowed=1;	// ticked in the Network lobby by default, so A allies without the host finding the box
 	Options.HarvTruce=0;
 	Options.CTF=0;
 	Options.FogOfWar=false;
@@ -984,6 +984,7 @@ void SessionClass::Read_Scenario_Descriptions(void)
 	char digest_buffer[32];
 
 	for (std::string const & file_name : Search_Files("*.MPR")) {
+		ini.Clear();	// a map without a [Digest] would otherwise keep the previous map's
 		file.Set_Name(file_name.c_str());
 		ini.Load(file);
 
