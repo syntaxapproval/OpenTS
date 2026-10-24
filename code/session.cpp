@@ -166,7 +166,7 @@ SessionClass::SessionClass(void)
 	Options.GameSpeed = 0;
 	Options.CrapEngineers = 0;
 
-	Options.AlliesAllowed=0;
+	Options.AlliesAllowed=1;	// the Network lobby has no Allies option; players ally with A, as in Red Alert
 	Options.HarvTruce=0;
 	Options.CTF=0;
 	Options.FogOfWar=false;

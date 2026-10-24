@@ -564,7 +564,7 @@ bool Find_Local_Scenario (char *filename, unsigned int length, char *digest, boo
 							*/
 							INIClass ini;
 							ini.Load(file);
-							ini.Get_String ("Digest", "1", "No digest here mate. Nope.", digest_buffer, sizeof (digest_buffer) );
+							ini.Get_String ("Digest", "1", "No Digest", digest_buffer, sizeof (digest_buffer) );	// the placeholder the scenario list gives a map with no digest (session.cpp)
 						//}
 	//DebugString("digest = %s, digest_buffer = %s.\n", digest, digest_buffer);
 
