@@ -50,6 +50,10 @@
 
 #include <algorithm>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 
 /*
 ******************************** Prototypes *********************************
@@ -775,6 +779,23 @@ bool Decrypt_Serial(char * buffer)
 	memset(serial, 0, sizeof(serial));
 
 	Get_Serial_From_Registry(serial, "SOFTWARE\\Westwood\\Tiberian Sun");
+
+#ifdef __EMSCRIPTEN__
+	// The web build has no registry, so every copy read the same empty serial and the host
+	// turned away the third player in a game ("There are already 2 players with your serial#").
+	// Each running copy gets its own serial instead, drawn once from the browser rather than
+	// from the game's own random numbers, which must stay in step between players.
+	if (serial[0] == 0) {
+		static char session_serial[SERIAL_MAX];
+		if (session_serial[0] == 0) {
+			for (int i = 0; i < SERIAL_MAX-1; i++) {
+				session_serial[i] = (char)('0' + (int)(emscripten_random() * 10.0f) % 10);
+			}
+			session_serial[SERIAL_MAX-1] = 0;
+		}
+		strcpy(serial, session_serial);
+	}
+#endif
 
 	strcpy(buffer, serial);
 
